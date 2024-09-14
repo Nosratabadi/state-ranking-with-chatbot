@@ -194,14 +194,17 @@ function onSubmitRank() {
     });
     
     document.getElementById('submit-rank').disabled = true;
-    document.getElementById('check-correct-button').disabled = false;
     
-    if (currentTrial === 0 && !isSecondRound) {
-        const requestPredictionButton = document.getElementById('request-prediction');
-        requestPredictionButton.disabled = false;
-        requestPredictionButton.classList.remove('inactive');
-    } else if (chatOpened) {
-        document.getElementById('ask-prediction').disabled = false;
+    if (!isSecondRound) {
+        if (currentTrial === 0) {
+            const requestPredictionButton = document.getElementById('request-prediction');
+            requestPredictionButton.disabled = false;
+            requestPredictionButton.classList.remove('inactive');
+        } else if (chatOpened) {
+            document.getElementById('ask-prediction').disabled = false;
+        }
+    } else {
+        document.getElementById('check-correct-button').disabled = false;
     }
     
     const rankButtons = document.querySelectorAll('.rank-button');
