@@ -105,56 +105,56 @@ function loadStimulus() {
                         <tr><td>Median Household Income Rank - 2008</td><td>${currentStimulus.income_rank}</td></tr>
                         <tr><td>Domestic Travel Expenditure Rank - 2009</td><td>${currentStimulus.travel_rank}</td></tr>
                     </table>
-                </div>`;
-        
-        if (!isSecondRound || !delegatedToAI) {
-            content += `
+                </div>
                 <p>Please select a rank for this state from the available numbers below.</p>
                 <div id="rank-buttons"></div>
-                <button id="submit-rank" disabled>Submit Rank</button>`;
-        }
-        
-        content += `
+                <button id="submit-rank" disabled>Submit Rank</button>
                 <button id="check-correct-button" disabled>Check Correct Answer</button>
                 <div id="correct-answer-text"></div>
                 <button id="next-button" disabled>Next</button>
-            </div>
-            <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
-                <div id="chat-header">AI Agent</div>
-                <div id="chat-messages"></div>
-                <div id="chat-input">
-                    <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>
-                </div>
-                ${(currentTrial === 0 && !isSecondRound) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
             </div>`;
+        
+        if (!isSecondRound || (isSecondRound && delegatedToAI)) {
+            content += `
+                <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
+                    <div id="chat-header">AI Agent</div>
+                    <div id="chat-messages"></div>
+                    <div id="chat-input">
+                        <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>
+                    </div>
+                    ${(currentTrial === 0 && !isSecondRound) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
+                </div>`;
+        }
 
         document.getElementById('experiment').innerHTML = content;
         
-        if (!isSecondRound || !delegatedToAI) {
-            const rankButtonsContainer = document.getElementById('rank-buttons');
-            rankButtonsContainer.innerHTML = '';
-            availableRanks.forEach(rank => {
-                const button = document.createElement('button');
-                button.className = 'rank-button';
-                button.textContent = rank;
-                button.onclick = () => selectRank(rank, button);
-                rankButtonsContainer.appendChild(button);
-            });
-            document.getElementById('submit-rank').onclick = onSubmitRank;
-        } else {
-            openChat();
-            document.getElementById('ask-prediction').disabled = false;
-        }
+        const rankButtonsContainer = document.getElementById('rank-buttons');
+        rankButtonsContainer.innerHTML = '';
+        availableRanks.forEach(rank => {
+            const button = document.createElement('button');
+            button.className = 'rank-button';
+            button.textContent = rank;
+            button.onclick = () => selectRank(rank, button);
+            rankButtonsContainer.appendChild(button);
+        });
 
+        document.getElementById('submit-rank').onclick = onSubmitRank;
         document.getElementById('check-correct-button').onclick = showCorrectAnswer;
         document.getElementById('next-button').onclick = nextTrial;
 
-        if (currentTrial === 0 && !isSecondRound) {
-            document.getElementById('request-prediction').onclick = openChat;
+        if (!isSecondRound || (isSecondRound && delegatedToAI)) {
+            if (currentTrial === 0 && !isSecondRound) {
+                document.getElementById('request-prediction').onclick = openChat;
+            }
+            const askPredictionButton = document.getElementById('ask-prediction');
+            if (askPredictionButton) {
+                askPredictionButton.onclick = requestAIPrediction;
+            }
         }
-        const askPredictionButton = document.getElementById('ask-prediction');
-        if (askPredictionButton) {
-            askPredictionButton.onclick = requestAIPrediction;
+
+        if (isSecondRound && delegatedToAI) {
+            openChat();
+            document.getElementById('ask-prediction').disabled = false;
         }
 
         updateChatDisplay();
@@ -250,11 +250,13 @@ function requestAIPrediction() {
 
 function updateChatDisplay() {
     const chatMessages = document.getElementById('chat-messages');
-    chatMessages.innerHTML = chatHistory.map(msg => 
-        `${msg.user ? `<div class="message user-message">${msg.user}</div>` : ''}
-         <div class="message ai-message">${msg.ai}</div>`
-    ).join('');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (chatMessages) {
+        chatMessages.innerHTML = chatHistory.map(msg => 
+            `${msg.user ? `<div class="message user-message">${msg.user}</div>` : ''}
+             <div class="message ai-message">${msg.ai}</div>`
+        ).join('');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 }
 
 function showCorrectAnswer() {
