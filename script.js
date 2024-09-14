@@ -74,6 +74,7 @@ let delegatedToAI = false;
 let correctAnswers = 0;
 let currentSelection = null;
 let chatOpened = false;
+let chatHistory = [];
 
 const GOOGLE_SHEET_URL = 'YOUR_NEW_GOOGLE_SHEET_WEB_APP_URL_HERE';
 
@@ -131,6 +132,8 @@ function loadStimulus() {
         if (askPredictionButton) {
             askPredictionButton.onclick = requestAIPrediction;
         }
+
+        updateChatDisplay();
     } else {
         if (!isSecondRound) {
             showFinalDecision();
@@ -191,18 +194,27 @@ function openChat() {
     askPredictionButton.style.display = 'block';
     askPredictionButton.disabled = false;
     document.getElementById('request-prediction').style.display = 'none';
+    updateChatDisplay();
 }
 
 function requestAIPrediction() {
-    const chatMessages = document.getElementById('chat-messages');
-    chatMessages.innerHTML += `<div class="message user-message">${aiQuestions[currentTrial]}</div>`;
-    document.getElementById('ask-prediction').disabled = true;
+    const userQuestion = aiQuestions[currentTrial];
+    const aiResponse = `Based on the provided information, my prediction for this state's rank is ${currentStimulus.ai_prediction}.`;
     
-    setTimeout(() => {
-        chatMessages.innerHTML += `<div class="message ai-message">Based on the provided information, my prediction for this state's rank is ${currentStimulus.ai_prediction}.</div>`;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        document.getElementById('check-correct-button').disabled = false;
-    }, 1000);
+    chatHistory.push({ user: userQuestion, ai: aiResponse });
+    updateChatDisplay();
+
+    document.getElementById('ask-prediction').disabled = true;
+    document.getElementById('check-correct-button').disabled = false;
+}
+
+function updateChatDisplay() {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.innerHTML = chatHistory.map(msg => 
+        `<div class="message user-message">${msg.user}</div>
+         <div class="message ai-message">${msg.ai}</div>`
+    ).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function showCorrectAnswer() {
@@ -248,6 +260,7 @@ function onFinalDecision(decision) {
     availableRanks = Array.from({length: 50}, (_, i) => i + 1);
     correctAnswers = 0;
     chatOpened = false;
+    chatHistory = []; // Reset chat history for the second round
     loadStimulus();
 }
 
