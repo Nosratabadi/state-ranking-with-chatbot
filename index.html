@@ -21,30 +21,53 @@
         #chat-interface {
             width: 35%;
             border: 1px solid #ccc;
-            padding: 10px;
-            position: relative;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             height: 400px;
         }
+        #chat-header {
+            background-color: #87CEEB;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
         #chat-messages {
             flex-grow: 1;
             overflow-y: auto;
-            margin-bottom: 10px;
-            border: 1px solid #eee;
             padding: 10px;
+            background-color: #f0f0f0;
         }
-        .user-message {
-            background-color: #e6f3ff;
-            padding: 5px;
-            margin: 5px 0;
-            border-radius: 5px;
+        .message {
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border-radius: 10px;
+            max-width: 80%;
         }
         .ai-message {
-            background-color: #f0f0f0;
-            padding: 5px;
-            margin: 5px 0;
+            background-color: #FFE4B5;
+            align-self: flex-start;
+        }
+        .user-message {
+            background-color: #87CEEB;
+            color: white;
+            align-self: flex-end;
+        }
+        #chat-input {
+            background-color: #87CEEB;
+            padding: 10px;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        #ask-prediction {
+            width: 100%;
+            padding: 10px;
+            border: none;
             border-radius: 5px;
+            background-color: white;
+            cursor: pointer;
         }
         #rank-buttons {
             display: grid;
@@ -76,11 +99,7 @@
             margin: 4px 2px;
             cursor: pointer;
             border-radius: 20px;
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: background-color 0.3s ease;
         }
         #request-prediction.inactive {
             background-color: #b3d9ff;
@@ -88,10 +107,6 @@
         }
         #request-prediction:disabled {
             opacity: 0.7;
-        }
-        .chat-closed #chat-messages,
-        .chat-closed #chat-input {
-            display: none;
         }
     </style>
 </head>
