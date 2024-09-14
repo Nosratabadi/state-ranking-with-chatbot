@@ -112,8 +112,6 @@ function loadStimulus() {
                 <p>Please select a rank for this state from the available numbers below.</p>
                 <div id="rank-buttons"></div>
                 <button id="submit-rank" disabled>Submit Rank</button>`;
-        } else {
-            content += `<button id="check-ai-prediction">Check AI's Prediction</button>`;
         }
         
         content += `
@@ -125,7 +123,7 @@ function loadStimulus() {
                 <div id="chat-header">AI Agent</div>
                 <div id="chat-messages"></div>
                 <div id="chat-input">
-                    ${(!isSecondRound || !delegatedToAI) ? `<button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>` : ''}
+                    <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>
                 </div>
                 ${(currentTrial === 0 && !isSecondRound) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
             </div>`;
@@ -144,7 +142,8 @@ function loadStimulus() {
             });
             document.getElementById('submit-rank').onclick = onSubmitRank;
         } else {
-            document.getElementById('check-ai-prediction').onclick = showAIPrediction;
+            openChat();
+            document.getElementById('ask-prediction').disabled = false;
         }
 
         document.getElementById('check-correct-button').onclick = showCorrectAnswer;
@@ -220,7 +219,9 @@ function openChat() {
         askPredictionButton.style.display = 'block';
         askPredictionButton.disabled = false;
     }
-    document.getElementById('request-prediction').style.display = 'none';
+    if (document.getElementById('request-prediction')) {
+        document.getElementById('request-prediction').style.display = 'none';
+    }
     updateChatDisplay();
 }
 
@@ -233,14 +234,18 @@ function requestAIPrediction() {
 
     document.getElementById('ask-prediction').disabled = true;
     document.getElementById('check-correct-button').disabled = false;
-}
-
-function showAIPrediction() {
-    const aiResponse = `Based on the provided information, my prediction for this state's rank is ${currentStimulus.ai_prediction}.`;
-    chatHistory.push({ ai: aiResponse });
-    updateChatDisplay();
-    document.getElementById('check-ai-prediction').disabled = true;
-    document.getElementById('check-correct-button').disabled = false;
+    
+    if (isSecondRound && delegatedToAI) {
+        saveData({
+            participantId: participantId,
+            round: 2,
+            trial: currentTrial + 1,
+            participant_rank: 'N/A',
+            correct_rank: currentStimulus.correct_answer,
+            ai_prediction: currentStimulus.ai_prediction,
+            final_decision: ''
+        });
+    }
 }
 
 function updateChatDisplay() {
