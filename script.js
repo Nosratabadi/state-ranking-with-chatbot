@@ -51,7 +51,6 @@ const stimuli = [
     {airports: 0, population_rank: 50, counties_rank: 39, income_rank: 19, travel_rank: 44, correct_answer: 48, ai_prediction: 45}
 ];
 
-
 let currentTrial = 0;
 const maxTrials = 10;
 let availableRanks = Array.from({length: 50}, (_, i) => i + 1);
@@ -61,6 +60,7 @@ let isSecondRound = false;
 let delegatedToAI = false;
 let correctAnswers = 0;
 let currentSelection = null;
+let chatOpened = false;
 
 const GOOGLE_SHEET_URL = 'YOUR_NEW_GOOGLE_SHEET_WEB_APP_URL_HERE';
 
@@ -92,12 +92,12 @@ function loadStimulus() {
                 <div id="correct-answer-text"></div>
                 <button id="next-button" disabled>Next</button>
             </div>
-            <div id="chat-interface" class="chat-closed">
-                <button id="request-prediction" class="chat-bubble">Request AI Prediction</button>
+            <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
                 <div id="chat-messages"></div>
-                <div id="chat-input" style="display: none;">
+                <div id="chat-input" ${chatOpened ? '' : 'style="display: none;"'}>
                     <button id="ask-prediction">What is your prediction for this state's rank?</button>
                 </div>
+                ${(!chatOpened && (currentTrial === 0 || (isSecondRound && delegatedToAI))) ? '<button id="request-prediction">Request AI Prediction</button>' : ''}
             </div>`;
 
         document.getElementById('experiment').innerHTML = content;
@@ -114,12 +114,16 @@ function loadStimulus() {
             });
             document.getElementById('submit-rank').onclick = onSubmitRank;
         } else {
-            document.getElementById('request-prediction').disabled = false;
+            document.getElementById('check-correct-button').disabled = false;
         }
 
         document.getElementById('check-correct-button').onclick = showCorrectAnswer;
-        document.getElementById('request-prediction').onclick = openChat;
-        document.getElementById('ask-prediction').onclick = requestAIPrediction;
+        if (!chatOpened && (currentTrial === 0 || (isSecondRound && delegatedToAI))) {
+            document.getElementById('request-prediction').onclick = openChat;
+        }
+        if (chatOpened) {
+            document.getElementById('ask-prediction').onclick = requestAIPrediction;
+        }
         document.getElementById('next-button').onclick = nextTrial;
     } else {
         if (!isSecondRound) {
@@ -157,7 +161,7 @@ function onSubmitRank() {
     });
     
     document.getElementById('submit-rank').disabled = true;
-    document.getElementById('request-prediction').disabled = false;
+    document.getElementById('check-correct-button').disabled = false;
     
     const rankButtons = document.querySelectorAll('.rank-button');
     rankButtons.forEach(button => {
@@ -168,6 +172,7 @@ function onSubmitRank() {
 }
 
 function openChat() {
+    chatOpened = true;
     document.getElementById('chat-interface').classList.remove('chat-closed');
     document.getElementById('chat-input').style.display = 'block';
     document.getElementById('request-prediction').style.display = 'none';
@@ -181,7 +186,9 @@ function requestAIPrediction() {
     setTimeout(() => {
         chatMessages.innerHTML += `<p class="ai-message">Based on the provided information, the predicted rank for this state is ${currentStimulus.ai_prediction}.</p>`;
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        document.getElementById('check-correct-button').disabled = false;
+        if (isSecondRound && delegatedToAI) {
+            document.getElementById('check-correct-button').disabled = false;
+        }
     }, 1000);
 }
 
@@ -226,6 +233,7 @@ function onFinalDecision(decision) {
     currentTrial = 0;
     availableRanks = Array.from({length: 50}, (_, i) => i + 1);
     correctAnswers = 0;
+    chatOpened = false;
     loadStimulus();
 }
 
