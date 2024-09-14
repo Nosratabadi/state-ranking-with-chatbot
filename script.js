@@ -256,8 +256,20 @@ function updateChatDisplay() {
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) {
         chatMessages.innerHTML = chatHistory.map(msg => 
-            `${msg.user ? `<div class="message user-message">${msg.user}</div>` : ''}
-             <div class="message ai-message">${msg.ai}</div>`
+            `<div class="message-container">
+                ${msg.user ? 
+                    `<div class="message user-message">
+                        ${msg.user}
+                        <span class="message-label user-label">You</span>
+                     </div>` : 
+                    ''}
+                ${msg.ai ? 
+                    `<div class="message ai-message">
+                        ${msg.ai}
+                        <span class="message-label ai-label">AI</span>
+                     </div>` : 
+                    ''}
+             </div>`
         ).join('');
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
