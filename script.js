@@ -91,7 +91,7 @@ function loadStimulus() {
                 <div id="chat-input" ${chatOpened ? '' : 'style="display: none;"'}>
                     <button id="ask-prediction" disabled>What is your prediction for this state's rank?</button>
                 </div>
-                ${(currentTrial === 0) ? '<button id="request-prediction" disabled>Request AI Prediction</button>' : ''}
+                ${(currentTrial === 0) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
             </div>`;
 
         document.getElementById('experiment').innerHTML = content;
@@ -154,7 +154,9 @@ function onSubmitRank() {
     document.getElementById('submit-rank').disabled = true;
     
     if (currentTrial === 0) {
-        document.getElementById('request-prediction').disabled = false;
+        const requestPredictionButton = document.getElementById('request-prediction');
+        requestPredictionButton.disabled = false;
+        requestPredictionButton.classList.remove('inactive');
     } else if (chatOpened) {
         document.getElementById('ask-prediction').disabled = false;
     }
