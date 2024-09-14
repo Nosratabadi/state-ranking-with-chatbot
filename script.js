@@ -114,8 +114,9 @@ function loadStimulus() {
         if (currentTrial === 0) {
             document.getElementById('request-prediction').onclick = openChat;
         }
-        if (chatOpened) {
-            document.getElementById('ask-prediction').onclick = requestAIPrediction;
+        const askPredictionButton = document.getElementById('ask-prediction');
+        if (askPredictionButton) {
+            askPredictionButton.onclick = requestAIPrediction;
         }
     } else {
         if (!isSecondRound) {
@@ -173,8 +174,9 @@ function onSubmitRank() {
 function openChat() {
     chatOpened = true;
     document.getElementById('chat-interface').classList.remove('chat-closed');
-    document.getElementById('ask-prediction').style.display = 'block';
-    document.getElementById('ask-prediction').disabled = false;
+    const askPredictionButton = document.getElementById('ask-prediction');
+    askPredictionButton.style.display = 'block';
+    askPredictionButton.disabled = false;
     document.getElementById('request-prediction').style.display = 'none';
 }
 
