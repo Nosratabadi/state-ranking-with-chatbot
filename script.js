@@ -75,12 +75,25 @@ let correctAnswers = 0;
 let currentSelection = null;
 let chatOpened = false;
 let chatHistory = [];
+let currentRoundStimuli = [];
 
 const GOOGLE_SHEET_URL = 'YOUR_NEW_GOOGLE_SHEET_WEB_APP_URL_HERE';
 
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
 function loadStimulus() {
     if (currentTrial < maxTrials) {
-        currentStimulus = stimuli[Math.floor(Math.random() * stimuli.length)];
+        if (currentRoundStimuli.length === 0) {
+            currentRoundStimuli = [...allStimuli];
+            shuffleArray(currentRoundStimuli);
+        }
+        currentStimulus = currentRoundStimuli.pop();
+        
         let content = `
             <div id="experiment-area">
                 <div id="stimulus-text">
@@ -92,10 +105,18 @@ function loadStimulus() {
                         <tr><td>Median Household Income Rank - 2008</td><td>${currentStimulus.income_rank}</td></tr>
                         <tr><td>Domestic Travel Expenditure Rank - 2009</td><td>${currentStimulus.travel_rank}</td></tr>
                     </table>
-                </div>
+                </div>`;
+        
+        if (!isSecondRound || !delegatedToAI) {
+            content += `
                 <p>Please select a rank for this state from the available numbers below.</p>
                 <div id="rank-buttons"></div>
-                <button id="submit-rank" disabled>Submit Rank</button>
+                <button id="submit-rank" disabled>Submit Rank</button>`;
+        } else {
+            content += `<button id="check-ai-prediction">Check AI's Prediction</button>`;
+        }
+        
+        content += `
                 <button id="check-correct-button" disabled>Check Correct Answer</button>
                 <div id="correct-answer-text"></div>
                 <button id="next-button" disabled>Next</button>
@@ -104,28 +125,32 @@ function loadStimulus() {
                 <div id="chat-header">AI Agent</div>
                 <div id="chat-messages"></div>
                 <div id="chat-input">
-                    <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>
+                    ${(!isSecondRound || !delegatedToAI) ? `<button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>` : ''}
                 </div>
-                ${(currentTrial === 0) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
+                ${(currentTrial === 0 && !isSecondRound) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
             </div>`;
 
         document.getElementById('experiment').innerHTML = content;
         
-        const rankButtonsContainer = document.getElementById('rank-buttons');
-        rankButtonsContainer.innerHTML = '';
-        availableRanks.forEach(rank => {
-            const button = document.createElement('button');
-            button.className = 'rank-button';
-            button.textContent = rank;
-            button.onclick = () => selectRank(rank, button);
-            rankButtonsContainer.appendChild(button);
-        });
+        if (!isSecondRound || !delegatedToAI) {
+            const rankButtonsContainer = document.getElementById('rank-buttons');
+            rankButtonsContainer.innerHTML = '';
+            availableRanks.forEach(rank => {
+                const button = document.createElement('button');
+                button.className = 'rank-button';
+                button.textContent = rank;
+                button.onclick = () => selectRank(rank, button);
+                rankButtonsContainer.appendChild(button);
+            });
+            document.getElementById('submit-rank').onclick = onSubmitRank;
+        } else {
+            document.getElementById('check-ai-prediction').onclick = showAIPrediction;
+        }
 
-        document.getElementById('submit-rank').onclick = onSubmitRank;
         document.getElementById('check-correct-button').onclick = showCorrectAnswer;
         document.getElementById('next-button').onclick = nextTrial;
 
-        if (currentTrial === 0) {
+        if (currentTrial === 0 && !isSecondRound) {
             document.getElementById('request-prediction').onclick = openChat;
         }
         const askPredictionButton = document.getElementById('ask-prediction');
@@ -171,7 +196,7 @@ function onSubmitRank() {
     
     document.getElementById('submit-rank').disabled = true;
     
-    if (currentTrial === 0) {
+    if (currentTrial === 0 && !isSecondRound) {
         const requestPredictionButton = document.getElementById('request-prediction');
         requestPredictionButton.disabled = false;
         requestPredictionButton.classList.remove('inactive');
@@ -191,8 +216,10 @@ function openChat() {
     chatOpened = true;
     document.getElementById('chat-interface').classList.remove('chat-closed');
     const askPredictionButton = document.getElementById('ask-prediction');
-    askPredictionButton.style.display = 'block';
-    askPredictionButton.disabled = false;
+    if (askPredictionButton) {
+        askPredictionButton.style.display = 'block';
+        askPredictionButton.disabled = false;
+    }
     document.getElementById('request-prediction').style.display = 'none';
     updateChatDisplay();
 }
@@ -208,10 +235,18 @@ function requestAIPrediction() {
     document.getElementById('check-correct-button').disabled = false;
 }
 
+function showAIPrediction() {
+    const aiResponse = `Based on the provided information, my prediction for this state's rank is ${currentStimulus.ai_prediction}.`;
+    chatHistory.push({ ai: aiResponse });
+    updateChatDisplay();
+    document.getElementById('check-ai-prediction').disabled = true;
+    document.getElementById('check-correct-button').disabled = false;
+}
+
 function updateChatDisplay() {
     const chatMessages = document.getElementById('chat-messages');
     chatMessages.innerHTML = chatHistory.map(msg => 
-        `<div class="message user-message">${msg.user}</div>
+        `${msg.user ? `<div class="message user-message">${msg.user}</div>` : ''}
          <div class="message ai-message">${msg.ai}</div>`
     ).join('');
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -259,8 +294,9 @@ function onFinalDecision(decision) {
     currentTrial = 0;
     availableRanks = Array.from({length: 50}, (_, i) => i + 1);
     correctAnswers = 0;
-    chatOpened = false;
+    chatOpened = decision === 'ai';
     chatHistory = []; // Reset chat history for the second round
+    currentRoundStimuli = []; // Reset stimuli for the second round
     loadStimulus();
 }
 
