@@ -184,7 +184,7 @@ function requestAIPrediction() {
     document.getElementById('ask-prediction').disabled = true;
     
     setTimeout(() => {
-        chatMessages.innerHTML += `<div class="message ai-message">Based on the provided information, the predicted rank for this state is ${currentStimulus.ai_prediction}.</div>`;
+        chatMessages.innerHTML += `<div class="message ai-message">Based on the provided information, my prediction for this state's rank is ${currentStimulus.ai_prediction}.</div>`;
         chatMessages.scrollTop = chatMessages.scrollHeight;
         document.getElementById('check-correct-button').disabled = false;
     }, 1000);
