@@ -87,6 +87,7 @@ function loadStimulus() {
                 <button id="next-button" disabled>Next</button>
             </div>
             <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
+                <div id="chat-header">AI Agent</div>
                 <div id="chat-messages"></div>
                 <div id="chat-input">
                     <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>What is your prediction for this state's rank?</button>
@@ -179,11 +180,11 @@ function openChat() {
 
 function requestAIPrediction() {
     const chatMessages = document.getElementById('chat-messages');
-    chatMessages.innerHTML += `<p class="user-message">What is your prediction for this state's rank?</p>`;
+    chatMessages.innerHTML += `<div class="message user-message">What is your prediction for this state's rank?</div>`;
     document.getElementById('ask-prediction').disabled = true;
     
     setTimeout(() => {
-        chatMessages.innerHTML += `<p class="ai-message">Based on the provided information, the predicted rank for this state is ${currentStimulus.ai_prediction}.</p>`;
+        chatMessages.innerHTML += `<div class="message ai-message">Based on the provided information, the predicted rank for this state is ${currentStimulus.ai_prediction}.</div>`;
         chatMessages.scrollTop = chatMessages.scrollHeight;
         document.getElementById('check-correct-button').disabled = false;
     }, 1000);
