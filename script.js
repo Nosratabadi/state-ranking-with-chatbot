@@ -88,8 +88,8 @@ function loadStimulus() {
             </div>
             <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
                 <div id="chat-messages"></div>
-                <div id="chat-input" ${chatOpened ? '' : 'style="display: none;"'}>
-                    <button id="ask-prediction" disabled>What is your prediction for this state's rank?</button>
+                <div id="chat-input">
+                    <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>What is your prediction for this state's rank?</button>
                 </div>
                 ${(currentTrial === 0) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
             </div>`;
@@ -172,9 +172,9 @@ function onSubmitRank() {
 function openChat() {
     chatOpened = true;
     document.getElementById('chat-interface').classList.remove('chat-closed');
-    document.getElementById('chat-input').style.display = 'block';
-    document.getElementById('request-prediction').style.display = 'none';
+    document.getElementById('ask-prediction').style.display = 'block';
     document.getElementById('ask-prediction').disabled = false;
+    document.getElementById('request-prediction').style.display = 'none';
 }
 
 function requestAIPrediction() {
