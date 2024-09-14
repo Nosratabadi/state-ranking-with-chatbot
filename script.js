@@ -82,7 +82,6 @@ function loadStimulus() {
                 <p>Please select a rank for this state from the available numbers below.</p>
                 <div id="rank-buttons"></div>
                 <button id="submit-rank" disabled>Submit Rank</button>
-                <button id="check-ai-button" disabled>Check AI's Prediction</button>
                 <button id="check-correct-button" disabled>Check Correct Answer</button>
                 <div id="correct-answer-text"></div>
                 <button id="next-button" disabled>Next</button>
@@ -90,9 +89,9 @@ function loadStimulus() {
             <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
                 <div id="chat-messages"></div>
                 <div id="chat-input" ${chatOpened ? '' : 'style="display: none;"'}>
-                    <button id="ask-prediction">What is your prediction for this state's rank?</button>
+                    <button id="ask-prediction" disabled>What is your prediction for this state's rank?</button>
                 </div>
-                ${(!chatOpened && currentTrial === 0) ? '<button id="request-prediction">Request AI Prediction</button>' : ''}
+                ${(currentTrial === 0) ? '<button id="request-prediction" disabled>Request AI Prediction</button>' : ''}
             </div>`;
 
         document.getElementById('experiment').innerHTML = content;
@@ -108,11 +107,10 @@ function loadStimulus() {
         });
 
         document.getElementById('submit-rank').onclick = onSubmitRank;
-        document.getElementById('check-ai-button').onclick = showAIPrediction;
         document.getElementById('check-correct-button').onclick = showCorrectAnswer;
         document.getElementById('next-button').onclick = nextTrial;
 
-        if (!chatOpened && currentTrial === 0) {
+        if (currentTrial === 0) {
             document.getElementById('request-prediction').onclick = openChat;
         }
         if (chatOpened) {
@@ -154,7 +152,12 @@ function onSubmitRank() {
     });
     
     document.getElementById('submit-rank').disabled = true;
-    document.getElementById('check-ai-button').disabled = false;
+    
+    if (currentTrial === 0) {
+        document.getElementById('request-prediction').disabled = false;
+    } else if (chatOpened) {
+        document.getElementById('ask-prediction').disabled = false;
+    }
     
     const rankButtons = document.querySelectorAll('.rank-button');
     rankButtons.forEach(button => {
@@ -169,6 +172,7 @@ function openChat() {
     document.getElementById('chat-interface').classList.remove('chat-closed');
     document.getElementById('chat-input').style.display = 'block';
     document.getElementById('request-prediction').style.display = 'none';
+    document.getElementById('ask-prediction').disabled = false;
 }
 
 function requestAIPrediction() {
@@ -179,13 +183,8 @@ function requestAIPrediction() {
     setTimeout(() => {
         chatMessages.innerHTML += `<p class="ai-message">Based on the provided information, the predicted rank for this state is ${currentStimulus.ai_prediction}.</p>`;
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        document.getElementById('check-correct-button').disabled = false;
     }, 1000);
-}
-
-function showAIPrediction() {
-    requestAIPrediction();
-    document.getElementById('check-correct-button').disabled = false;
-    document.getElementById('check-ai-button').disabled = true;
 }
 
 function showCorrectAnswer() {
