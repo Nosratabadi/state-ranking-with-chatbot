@@ -194,6 +194,7 @@ function onSubmitRank() {
     });
     
     document.getElementById('submit-rank').disabled = true;
+    document.getElementById('check-correct-button').disabled = false;
     
     if (currentTrial === 0 && !isSecondRound) {
         const requestPredictionButton = document.getElementById('request-prediction');
