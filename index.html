@@ -80,6 +80,14 @@
             bottom: 10px;
             left: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+        #request-prediction.inactive {
+            background-color: #b3d9ff;
+            cursor: not-allowed;
+        }
+        #request-prediction:disabled {
+            opacity: 0.7;
         }
         .chat-closed #chat-messages,
         .chat-closed #chat-input {
