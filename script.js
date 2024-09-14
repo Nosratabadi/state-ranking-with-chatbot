@@ -51,6 +51,19 @@ const stimuli = [
     {airports: 0, population_rank: 50, counties_rank: 39, income_rank: 19, travel_rank: 44, correct_answer: 48, ai_prediction: 45}
 ];
 
+const aiQuestions = [
+    "What is your prediction for this state's ranking?",
+    "What about this state?",
+    "How would you rank this one?",
+    "What's your guess for this state's position?",
+    "Where do you think this state stands?",
+    "Any thoughts on this state's ranking?",
+    "How would you place this state?",
+    "What's your take on this state's position?",
+    "Where would you put this state in the rankings?",
+    "What's your estimate for this state?"
+];
+
 let currentTrial = 0;
 const maxTrials = 10;
 let availableRanks = Array.from({length: 50}, (_, i) => i + 1);
@@ -90,7 +103,7 @@ function loadStimulus() {
                 <div id="chat-header">AI Agent</div>
                 <div id="chat-messages"></div>
                 <div id="chat-input">
-                    <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>What is your prediction for this state's rank?</button>
+                    <button id="ask-prediction" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>
                 </div>
                 ${(currentTrial === 0) ? '<button id="request-prediction" class="inactive" disabled>Request AI Prediction</button>' : ''}
             </div>`;
@@ -182,7 +195,7 @@ function openChat() {
 
 function requestAIPrediction() {
     const chatMessages = document.getElementById('chat-messages');
-    chatMessages.innerHTML += `<div class="message user-message">What is your prediction for this state's rank?</div>`;
+    chatMessages.innerHTML += `<div class="message user-message">${aiQuestions[currentTrial]}</div>`;
     document.getElementById('ask-prediction').disabled = true;
     
     setTimeout(() => {
