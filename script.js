@@ -51,6 +51,7 @@ const stimuli = [
     {airports: 0, population_rank: 50, counties_rank: 39, income_rank: 19, travel_rank: 44, correct_answer: 48, ai_prediction: 45}
 ];
 
+
 let currentTrial = 0;
 const maxTrials = 10;
 let availableRanks = Array.from({length: 50}, (_, i) => i + 1);
@@ -77,36 +78,48 @@ function loadStimulus() {
                         <tr><td>Median Household Income Rank - 2008</td><td>${currentStimulus.income_rank}</td></tr>
                         <tr><td>Domestic Travel Expenditure Rank - 2009</td><td>${currentStimulus.travel_rank}</td></tr>
                     </table>
-                </div>
+                </div>`;
+        
+        if (!isSecondRound || !delegatedToAI) {
+            content += `
                 <p>Please select a rank for this state from the available numbers below.</p>
                 <div id="rank-buttons"></div>
-                <button id="submit-rank" disabled>Submit Rank</button>
+                <button id="submit-rank" disabled>Submit Rank</button>`;
+        }
+        
+        content += `
                 <button id="check-correct-button" disabled>Check Correct Answer</button>
                 <div id="correct-answer-text"></div>
                 <button id="next-button" disabled>Next</button>
             </div>
-            <div id="chat-interface">
+            <div id="chat-interface" class="chat-closed">
+                <button id="request-prediction" class="chat-bubble">Request AI Prediction</button>
                 <div id="chat-messages"></div>
-                <div id="chat-input">
-                    <button id="request-prediction" disabled>Request AI Prediction</button>
+                <div id="chat-input" style="display: none;">
+                    <button id="ask-prediction">What is your prediction for this state's rank?</button>
                 </div>
             </div>`;
 
         document.getElementById('experiment').innerHTML = content;
         
-        const rankButtonsContainer = document.getElementById('rank-buttons');
-        rankButtonsContainer.innerHTML = '';
-        availableRanks.forEach(rank => {
-            const button = document.createElement('button');
-            button.className = 'rank-button';
-            button.textContent = rank;
-            button.onclick = () => selectRank(rank, button);
-            rankButtonsContainer.appendChild(button);
-        });
+        if (!isSecondRound || !delegatedToAI) {
+            const rankButtonsContainer = document.getElementById('rank-buttons');
+            rankButtonsContainer.innerHTML = '';
+            availableRanks.forEach(rank => {
+                const button = document.createElement('button');
+                button.className = 'rank-button';
+                button.textContent = rank;
+                button.onclick = () => selectRank(rank, button);
+                rankButtonsContainer.appendChild(button);
+            });
+            document.getElementById('submit-rank').onclick = onSubmitRank;
+        } else {
+            document.getElementById('request-prediction').disabled = false;
+        }
 
-        document.getElementById('submit-rank').onclick = onSubmitRank;
         document.getElementById('check-correct-button').onclick = showCorrectAnswer;
-        document.getElementById('request-prediction').onclick = requestAIPrediction;
+        document.getElementById('request-prediction').onclick = openChat;
+        document.getElementById('ask-prediction').onclick = requestAIPrediction;
         document.getElementById('next-button').onclick = nextTrial;
     } else {
         if (!isSecondRound) {
@@ -144,7 +157,6 @@ function onSubmitRank() {
     });
     
     document.getElementById('submit-rank').disabled = true;
-    document.getElementById('check-correct-button').disabled = false;
     document.getElementById('request-prediction').disabled = false;
     
     const rankButtons = document.querySelectorAll('.rank-button');
@@ -153,6 +165,24 @@ function onSubmitRank() {
             button.disabled = true;
         }
     });
+}
+
+function openChat() {
+    document.getElementById('chat-interface').classList.remove('chat-closed');
+    document.getElementById('chat-input').style.display = 'block';
+    document.getElementById('request-prediction').style.display = 'none';
+}
+
+function requestAIPrediction() {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.innerHTML += `<p class="user-message">What is your prediction for this state's rank?</p>`;
+    document.getElementById('ask-prediction').disabled = true;
+    
+    setTimeout(() => {
+        chatMessages.innerHTML += `<p class="ai-message">Based on the provided information, the predicted rank for this state is ${currentStimulus.ai_prediction}.</p>`;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        document.getElementById('check-correct-button').disabled = false;
+    }, 1000);
 }
 
 function showCorrectAnswer() {
@@ -166,16 +196,6 @@ function showCorrectAnswer() {
         }
     }
     document.getElementById('next-button').disabled = false;
-}
-
-function requestAIPrediction() {
-    const chatMessages = document.getElementById('chat-messages');
-    chatMessages.innerHTML += `<p class="user-message">What is your prediction for this state's rank?</p>`;
-    setTimeout(() => {
-        chatMessages.innerHTML += `<p class="ai-message">Based on the provided information, the predicted rank for this state is ${currentStimulus.ai_prediction}.</p>`;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }, 1000);
-    document.getElementById('request-prediction').disabled = true;
 }
 
 function nextTrial() {
