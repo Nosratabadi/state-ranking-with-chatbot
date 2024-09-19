@@ -11,7 +11,6 @@ let currentStimulus = null;
 let chatOpened = false;
 let chatHistory = [];
 
-
 const allStimuli = [
     {airports: 0, population_rank: 23, counties_rank: 22, income_rank: 46, travel_rank: 29, correct_answer: 34, ai_prediction: 34},
     {airports: 0, population_rank: 47, counties_rank: 37, income_rank: 4, travel_rank: 47, correct_answer: 29, ai_prediction: 44},
