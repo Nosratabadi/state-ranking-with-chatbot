@@ -77,7 +77,7 @@ let chatOpened = false;
 let chatHistory = [];
 let currentRoundStimuli = [];
 
-const GOOGLE_SHEET_URL = 'YOUR_NEW_GOOGLE_SHEET_WEB_APP_URL_HERE';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/16_RLsKbDu-IlEiBMmbMg2v6AtFffbVH-P9AJI-elMvyNt3tQTo0HMNk9';
 
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
