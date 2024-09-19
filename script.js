@@ -71,6 +71,7 @@ function shuffleArray(array) {
 }
 
 function loadStimulus() {
+    console.log('Loading stimulus for trial:', currentTrial);
     if (currentTrial < MAX_TRIALS) {
         currentStimulus = allStimuli[currentTrial];
         
@@ -89,28 +90,17 @@ function loadStimulus() {
                 </div>
                 <p>Please select a rank for this state based on the number of flight passengers (1-50):</p>
                 <input type="number" id="rank-input" min="1" max="50">
-                <button id="submit-rank">Submit Rank</button>
+                <button id="submit-rank" onclick="submitRank()">Submit Rank</button>
                 <div id="ai-prediction" style="display:none;">
                     <p>AI Prediction: <span id="ai-prediction-value"></span></p>
                 </div>
-                <button id="show-correct" style="display:none;">Show Correct Answer</button>
+                <button id="request-ai" onclick="showAIPrediction()">Request AI Prediction</button>
+                <button id="show-correct" style="display:none;" onclick="showCorrectAnswer()">Show Correct Answer</button>
                 <div id="correct-answer" style="display:none;"></div>
-                <button id="next-trial" style="display:none;">Next Trial</button>
+                <button id="next-trial" style="display:none;" onclick="nextTrial()">Next Trial</button>
             </div>`;
         
         document.getElementById('experiment').innerHTML = content;
-        
-        document.getElementById('submit-rank').addEventListener('click', submitRank);
-        document.getElementById('show-correct').addEventListener('click', showCorrectAnswer);
-        document.getElementById('next-trial').addEventListener('click', nextTrial);
-        
-        if (!isSecondRound || (isSecondRound && delegatedToAI)) {
-            let requestAiButton = document.createElement('button');
-            requestAiButton.id = 'request-ai';
-            requestAiButton.textContent = 'Request AI Prediction';
-            requestAiButton.addEventListener('click', showAIPrediction);
-            document.getElementById('experiment-area').appendChild(requestAiButton);
-        }
     } else {
         if (!isSecondRound) {
             showFinalDecision();
@@ -121,6 +111,7 @@ function loadStimulus() {
 }
 
 function submitRank() {
+    console.log('Submit rank button clicked');
     const rankInput = document.getElementById('rank-input');
     currentSelection = parseInt(rankInput.value);
     
@@ -129,12 +120,12 @@ function submitRank() {
         return;
     }
     
+    console.log('Submitted rank:', currentSelection);
+    
     document.getElementById('submit-rank').disabled = true;
     document.getElementById('rank-input').disabled = true;
-    
-    if (!isSecondRound || (isSecondRound && !delegatedToAI)) {
-        document.getElementById('show-correct').style.display = 'block';
-    }
+    document.getElementById('request-ai').style.display = 'inline-block';
+    document.getElementById('show-correct').style.display = 'inline-block';
     
     saveData({
         participantId: participantId,
@@ -150,21 +141,19 @@ function submitRank() {
 }
 
 function showAIPrediction() {
+    console.log('Showing AI prediction');
     document.getElementById('ai-prediction').style.display = 'block';
     document.getElementById('ai-prediction-value').textContent = currentStimulus.ai_prediction;
     document.getElementById('request-ai').style.display = 'none';
-    
-    if (isSecondRound && delegatedToAI) {
-        document.getElementById('show-correct').style.display = 'block';
-    }
 }
 
 function showCorrectAnswer() {
+    console.log('Showing correct answer');
     const correctAnswer = currentStimulus.correct_answer;
     document.getElementById('correct-answer').innerHTML = `<p>Correct Answer: ${correctAnswer}</p>`;
     document.getElementById('correct-answer').style.display = 'block';
     document.getElementById('show-correct').style.display = 'none';
-    document.getElementById('next-trial').style.display = 'block';
+    document.getElementById('next-trial').style.display = 'inline-block';
     
     if (isSecondRound) {
         if (delegatedToAI && currentStimulus.ai_prediction === correctAnswer) {
@@ -176,22 +165,23 @@ function showCorrectAnswer() {
 }
 
 function nextTrial() {
+    console.log('Moving to next trial');
     currentTrial++;
     loadStimulus();
 }
 
 function showFinalDecision() {
+    console.log('Showing final decision screen');
     document.getElementById('experiment').innerHTML = `
         <h2>You have completed 10 trials.</h2>
         <p>Would you like to predict another 10 rounds yourself or let AI predict for you?</p>
-        <button id="predict-self">Predict Myself</button>
-        <button id="predict-ai">Let AI Predict</button>
+        <button onclick="onFinalDecision('self')">Predict Myself</button>
+        <button onclick="onFinalDecision('ai')">Let AI Predict</button>
     `;
-    document.getElementById('predict-self').addEventListener('click', () => onFinalDecision('self'));
-    document.getElementById('predict-ai').addEventListener('click', () => onFinalDecision('ai'));
 }
 
 function onFinalDecision(decision) {
+    console.log('Final decision made:', decision);
     saveData({
         participantId: participantId,
         round: 1,
@@ -211,6 +201,7 @@ function onFinalDecision(decision) {
 }
 
 function showFinalReward() {
+    console.log('Showing final reward screen');
     const reward = correctAnswers * 1; // $1 per correct answer
     document.getElementById('experiment').innerHTML = `
         <h2>Experiment Completed</h2>
@@ -232,6 +223,7 @@ function showFinalReward() {
 }
 
 function saveData(data) {
+    console.log('Attempting to save data:', data);
     fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'cors',
@@ -266,6 +258,7 @@ loadStimulus();
 
 // Add this for testing
 function testSaveData() {
+    console.log('Testing data save function');
     saveData({
         participantId: participantId,
         round: 1,
@@ -281,3 +274,5 @@ function testSaveData() {
 
 // Add test button to HTML
 document.body.innerHTML += '<button onclick="testSaveData()">Test Save Data</button>';
+
+console.log('Script loaded successfully');
