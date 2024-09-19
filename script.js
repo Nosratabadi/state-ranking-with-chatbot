@@ -11,6 +11,7 @@ let currentStimulus = null;
 let chatOpened = false;
 let chatHistory = [];
 
+
 const allStimuli = [
     {airports: 0, population_rank: 23, counties_rank: 22, income_rank: 46, travel_rank: 29, correct_answer: 34, ai_prediction: 34},
     {airports: 0, population_rank: 47, counties_rank: 37, income_rank: 4, travel_rank: 47, correct_answer: 29, ai_prediction: 44},
@@ -91,22 +92,37 @@ function loadStimulus() {
         let content = `
             <div id="experiment-area">
                 <h2>Trial ${currentTrial + 1} of ${MAX_TRIALS}</h2>
-                <div id="stimulus-text">
-                    <h3>State Information:</h3>
-                    <table>
-                        <tr><td>Number of Major Airports</td><td>${currentStimulus.airports}</td></tr>
-                        <tr><td>Census Population Rank - 2010</td><td>${currentStimulus.population_rank}</td></tr>
-                        <tr><td>Number of Counties Rank</td><td>${currentStimulus.counties_rank}</td></tr>
-                        <tr><td>Median Household Income Rank - 2008</td><td>${currentStimulus.income_rank}</td></tr>
-                        <tr><td>Domestic Travel Expenditure Rank - 2009</td><td>${currentStimulus.travel_rank}</td></tr>
-                    </table>
+                <div id="tables-container" style="display: flex; justify-content: space-between;">
+                    <div id="stimulus-table" style="width: 48%;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr><th colspan="2" style="text-align: left; padding: 5px;">State Information:</th></tr>
+                            <tr><td style="border: 1px solid black; padding: 5px;">Number of Major Airports</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.airports}</td></tr>
+                            <tr><td style="border: 1px solid black; padding: 5px;">Census Population Rank - 2010</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.population_rank}</td></tr>
+                            <tr><td style="border: 1px solid black; padding: 5px;">Number of Counties Rank</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.counties_rank}</td></tr>
+                            <tr><td style="border: 1px solid black; padding: 5px;">Median Household Income Rank - 2008</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.income_rank}</td></tr>
+                            <tr><td style="border: 1px solid black; padding: 5px;">Domestic Travel Expenditure Rank - 2009</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.travel_rank}</td></tr>
+                        </table>
+                    </div>
+                    <div id="result-table" style="width: 48%; display: none;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid black; padding: 5px;">You</th>
+                                <th style="border: 1px solid black; padding: 5px;">AI Prediction</th>
+                                <th style="border: 1px solid black; padding: 5px;">Correct Rank</th>
+                            </tr>
+                            <tr>
+                                <td id="user-rank" style="border: 1px solid black; padding: 5px;"></td>
+                                <td id="ai-rank" style="border: 1px solid black; padding: 5px;"></td>
+                                <td id="correct-rank" style="border: 1px solid black; padding: 5px;"></td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
                 <p>Please select a rank for this state based on the number of flight passengers (1-50):</p>
-                <input type="number" id="rank-input" min="1" max="50">
-                <button id="submit-rank" onclick="submitRank()">Submit Rank</button>
-                <button id="show-correct" style="display:none;" onclick="showCorrectAnswer()">Show Correct Answer</button>
-                <div id="correct-answer" style="display:none;"></div>
-                <button id="next-trial" style="display:none;" onclick="nextTrial()">Next Trial</button>
+                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                    <input type="number" id="rank-input" min="1" max="50" style="width: 100px; height: 30px; margin-right: 10px;">
+                    <button id="submit-rank" onclick="submitRank()" style="height: 36px;">Submit Rank</button>
+                </div>
             </div>
             <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
                 <div id="chat-header">AI Agent</div>
@@ -138,6 +154,8 @@ function submitRank() {
     
     document.getElementById('submit-rank').disabled = true;
     document.getElementById('rank-input').disabled = true;
+    document.getElementById('result-table').style.display = 'block';
+    document.getElementById('user-rank').textContent = currentSelection;
     
     if (!isSecondRound) {
         if (currentTrial === 0) {
@@ -147,8 +165,10 @@ function submitRank() {
         } else if (chatOpened) {
             document.getElementById('ask-prediction').disabled = false;
         }
+    } else if (delegatedToAI) {
+        requestAIPrediction();
     } else {
-        document.getElementById('show-correct').style.display = 'inline-block';
+        showCorrectAnswer();
     }
     
     saveData({
@@ -184,7 +204,9 @@ function requestAIPrediction() {
     updateChatDisplay();
 
     document.getElementById('ask-prediction').disabled = true;
-    document.getElementById('show-correct').style.display = 'inline-block';
+    document.getElementById('ai-rank').textContent = currentStimulus.ai_prediction;
+    
+    setTimeout(showCorrectAnswer, 1000);
     
     if (isSecondRound && delegatedToAI) {
         saveData({
@@ -224,8 +246,8 @@ function updateChatDisplay() {
 
 function showCorrectAnswer() {
     const correctAnswer = currentStimulus.correct_answer;
-    document.getElementById('correct-answer').innerHTML = `<p>Correct Answer: ${correctAnswer}</p>`;
-    document.getElementById('correct-answer').style.display = 'block';
+    document.getElementById('correct-rank').textContent = correctAnswer;
+    
     if (isSecondRound) {
         if (delegatedToAI && currentStimulus.ai_prediction === correctAnswer) {
             correctAnswers++;
@@ -233,8 +255,8 @@ function showCorrectAnswer() {
             correctAnswers++;
         }
     }
-    document.getElementById('next-trial').style.display = 'inline-block';
-    document.getElementById('show-correct').style.display = 'none';
+    
+    setTimeout(nextTrial, 2000);
 }
 
 function nextTrial() {
