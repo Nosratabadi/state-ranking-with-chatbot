@@ -1,5 +1,5 @@
 // Constants and global variables
-const GOOGLE_SHEET_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzoXaxHnAzXzs_HuufwiWd9_IKnINMeNsBAr8ks2DnUIGHr02Fhlmh-72hRLK0apluS/exec';
 const MAX_TRIALS = 10;
 let currentTrial = 0;
 let participantId = Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -100,15 +100,16 @@ function loadStimulus() {
         
         document.getElementById('experiment').innerHTML = content;
         
-        document.getElementById('submit-rank').onclick = submitRank;
-        document.getElementById('show-correct').onclick = showCorrectAnswer;
-        document.getElementById('next-trial').onclick = nextTrial;
+        document.getElementById('submit-rank').addEventListener('click', submitRank);
+        document.getElementById('show-correct').addEventListener('click', showCorrectAnswer);
+        document.getElementById('next-trial').addEventListener('click', nextTrial);
         
         if (!isSecondRound || (isSecondRound && delegatedToAI)) {
-            document.getElementById('experiment-area').innerHTML += `
-                <button id="request-ai">Request AI Prediction</button>
-            `;
-            document.getElementById('request-ai').onclick = showAIPrediction;
+            let requestAiButton = document.createElement('button');
+            requestAiButton.id = 'request-ai';
+            requestAiButton.textContent = 'Request AI Prediction';
+            requestAiButton.addEventListener('click', showAIPrediction);
+            document.getElementById('experiment-area').appendChild(requestAiButton);
         }
     } else {
         if (!isSecondRound) {
@@ -183,9 +184,11 @@ function showFinalDecision() {
     document.getElementById('experiment').innerHTML = `
         <h2>You have completed 10 trials.</h2>
         <p>Would you like to predict another 10 rounds yourself or let AI predict for you?</p>
-        <button onclick="onFinalDecision('self')">Predict Myself</button>
-        <button onclick="onFinalDecision('ai')">Let AI Predict</button>
+        <button id="predict-self">Predict Myself</button>
+        <button id="predict-ai">Let AI Predict</button>
     `;
+    document.getElementById('predict-self').addEventListener('click', () => onFinalDecision('self'));
+    document.getElementById('predict-ai').addEventListener('click', () => onFinalDecision('ai'));
 }
 
 function onFinalDecision(decision) {
