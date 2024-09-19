@@ -16,12 +16,20 @@
             margin: 0 auto;
         }
         #experiment-area {
-            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #left-column {
+            width: 48%;
+        }
+        #right-column {
+            width: 48%;
         }
         #chat-interface {
             border: 1px solid #ccc;
             border-radius: 10px;
             margin-top: 20px;
+            width: 100%;
         }
         #chat-header {
             background-color: #87CEEB;
@@ -32,7 +40,7 @@
             border-top-right-radius: 10px;
         }
         #chat-messages {
-            height: 200px;
+            height: 150px;
             overflow-y: auto;
             padding: 10px;
             background-color: #f0f0f0;
@@ -83,10 +91,12 @@
 <body>
     <div id="experiment">
         <div id="experiment-area">
-            <!-- The experiment content will be dynamically inserted here by JavaScript -->
-        </div>
-        <div id="chat-interface">
-            <!-- The chat interface will be dynamically inserted here by JavaScript -->
+            <div id="left-column">
+                <!-- The stimulus table will be inserted here -->
+            </div>
+            <div id="right-column">
+                <!-- The result table and chat interface will be inserted here -->
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
