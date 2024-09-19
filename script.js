@@ -7,8 +7,9 @@ let isSecondRound = false;
 let delegatedToAI = false;
 let correctAnswers = 0;
 let currentSelection = null;
-let chatOpened = false;
 let currentStimulus = null;
+let chatOpened = false;
+let chatHistory = [];
 
 const allStimuli = [
     {airports: 0, population_rank: 23, counties_rank: 22, income_rank: 46, travel_rank: 29, correct_answer: 34, ai_prediction: 34},
@@ -63,6 +64,19 @@ const allStimuli = [
     {airports: 0, population_rank: 50, counties_rank: 39, income_rank: 19, travel_rank: 44, correct_answer: 48, ai_prediction: 45}
 ];
 
+const aiQuestions = [
+    "What is your prediction for this state's ranking?",
+    "What about this state?",
+    "How would you rank this one?",
+    "What's your guess for this state's position?",
+    "Where do you think this state stands?",
+    "Any thoughts on this state's ranking?",
+    "How would you place this state?",
+    "What's your take on this state's position?",
+    "Where would you put this state in the rankings?",
+    "What's your estimate for this state?"
+];
+
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -71,7 +85,6 @@ function shuffleArray(array) {
 }
 
 function loadStimulus() {
-    console.log('Loading stimulus for trial:', currentTrial);
     if (currentTrial < MAX_TRIALS) {
         currentStimulus = allStimuli[currentTrial];
         
@@ -91,13 +104,17 @@ function loadStimulus() {
                 <p>Please select a rank for this state based on the number of flight passengers (1-50):</p>
                 <input type="number" id="rank-input" min="1" max="50">
                 <button id="submit-rank" onclick="submitRank()">Submit Rank</button>
-                <div id="ai-prediction" style="display:none;">
-                    <p>AI Prediction: <span id="ai-prediction-value"></span></p>
-                </div>
-                <button id="request-ai" onclick="showAIPrediction()">Request AI Prediction</button>
                 <button id="show-correct" style="display:none;" onclick="showCorrectAnswer()">Show Correct Answer</button>
                 <div id="correct-answer" style="display:none;"></div>
                 <button id="next-trial" style="display:none;" onclick="nextTrial()">Next Trial</button>
+            </div>
+            <div id="chat-interface" class="${chatOpened ? '' : 'chat-closed'}">
+                <div id="chat-header">AI Agent</div>
+                <div id="chat-messages"></div>
+                <div id="chat-input">
+                    <button id="ask-prediction" onclick="requestAIPrediction()" ${chatOpened ? '' : 'style="display: none;"'} disabled>${aiQuestions[currentTrial]}</button>
+                </div>
+                ${(currentTrial === 0 && !isSecondRound) ? '<button id="request-prediction" onclick="openChat()" class="inactive" disabled>Request AI Prediction</button>' : ''}
             </div>`;
         
         document.getElementById('experiment').innerHTML = content;
@@ -111,7 +128,6 @@ function loadStimulus() {
 }
 
 function submitRank() {
-    console.log('Submit rank button clicked');
     const rankInput = document.getElementById('rank-input');
     currentSelection = parseInt(rankInput.value);
     
@@ -120,12 +136,20 @@ function submitRank() {
         return;
     }
     
-    console.log('Submitted rank:', currentSelection);
-    
     document.getElementById('submit-rank').disabled = true;
     document.getElementById('rank-input').disabled = true;
-    document.getElementById('request-ai').style.display = 'inline-block';
-    document.getElementById('show-correct').style.display = 'inline-block';
+    
+    if (!isSecondRound) {
+        if (currentTrial === 0) {
+            const requestPredictionButton = document.getElementById('request-prediction');
+            requestPredictionButton.disabled = false;
+            requestPredictionButton.classList.remove('inactive');
+        } else if (chatOpened) {
+            document.getElementById('ask-prediction').disabled = false;
+        }
+    } else {
+        document.getElementById('show-correct').style.display = 'inline-block';
+    }
     
     saveData({
         participantId: participantId,
@@ -134,27 +158,74 @@ function submitRank() {
         participantRank: currentSelection,
         correctRank: currentStimulus.correct_answer,
         aiPrediction: currentStimulus.ai_prediction,
-        finalDecision: '',
-        correctAnswers: '',
-        reward: ''
+        finalDecision: ''
     });
 }
 
-function showAIPrediction() {
-    console.log('Showing AI prediction');
-    document.getElementById('ai-prediction').style.display = 'block';
-    document.getElementById('ai-prediction-value').textContent = currentStimulus.ai_prediction;
-    document.getElementById('request-ai').style.display = 'none';
+function openChat() {
+    chatOpened = true;
+    document.getElementById('chat-interface').classList.remove('chat-closed');
+    const askPredictionButton = document.getElementById('ask-prediction');
+    if (askPredictionButton) {
+        askPredictionButton.style.display = 'block';
+        askPredictionButton.disabled = false;
+    }
+    if (document.getElementById('request-prediction')) {
+        document.getElementById('request-prediction').style.display = 'none';
+    }
+    updateChatDisplay();
+}
+
+function requestAIPrediction() {
+    const userQuestion = aiQuestions[currentTrial];
+    const aiResponse = `Based on the provided information, my prediction for this state's rank is ${currentStimulus.ai_prediction}.`;
+    
+    chatHistory.push({ user: userQuestion, ai: aiResponse });
+    updateChatDisplay();
+
+    document.getElementById('ask-prediction').disabled = true;
+    document.getElementById('show-correct').style.display = 'inline-block';
+    
+    if (isSecondRound && delegatedToAI) {
+        saveData({
+            participantId: participantId,
+            round: 2,
+            trial: currentTrial + 1,
+            participantRank: 'N/A',
+            correctRank: currentStimulus.correct_answer,
+            aiPrediction: currentStimulus.ai_prediction,
+            finalDecision: ''
+        });
+    }
+}
+
+function updateChatDisplay() {
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.innerHTML = chatHistory.map(msg => 
+            `<div class="message-container">
+                ${msg.user ? 
+                    `<div class="message user-message">
+                        ${msg.user}
+                        <span class="message-label user-label">You</span>
+                     </div>` : 
+                    ''}
+                ${msg.ai ? 
+                    `<div class="message ai-message">
+                        ${msg.ai}
+                        <span class="message-label ai-label">AI</span>
+                     </div>` : 
+                    ''}
+             </div>`
+        ).join('');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 }
 
 function showCorrectAnswer() {
-    console.log('Showing correct answer');
     const correctAnswer = currentStimulus.correct_answer;
     document.getElementById('correct-answer').innerHTML = `<p>Correct Answer: ${correctAnswer}</p>`;
     document.getElementById('correct-answer').style.display = 'block';
-    document.getElementById('show-correct').style.display = 'none';
-    document.getElementById('next-trial').style.display = 'inline-block';
-    
     if (isSecondRound) {
         if (delegatedToAI && currentStimulus.ai_prediction === correctAnswer) {
             correctAnswers++;
@@ -162,26 +233,24 @@ function showCorrectAnswer() {
             correctAnswers++;
         }
     }
+    document.getElementById('next-trial').style.display = 'inline-block';
+    document.getElementById('show-correct').style.display = 'none';
 }
 
 function nextTrial() {
-    console.log('Moving to next trial');
     currentTrial++;
     loadStimulus();
 }
 
 function showFinalDecision() {
-    console.log('Showing final decision screen');
     document.getElementById('experiment').innerHTML = `
-        <h2>You have completed 10 trials.</h2>
-        <p>Would you like to predict another 10 rounds yourself or let AI predict for you?</p>
+        <h3>You have completed 10 trials. Would you like to predict another 10 rounds yourself or let AI predict for you?</h3>
         <button onclick="onFinalDecision('self')">Predict Myself</button>
         <button onclick="onFinalDecision('ai')">Let AI Predict</button>
     `;
 }
 
 function onFinalDecision(decision) {
-    console.log('Final decision made:', decision);
     saveData({
         participantId: participantId,
         round: 1,
@@ -189,22 +258,21 @@ function onFinalDecision(decision) {
         participantRank: '',
         correctRank: '',
         aiPrediction: '',
-        finalDecision: decision,
-        correctAnswers: '',
-        reward: ''
+        finalDecision: decision
     });
     delegatedToAI = decision === 'ai';
     isSecondRound = true;
     currentTrial = 0;
     correctAnswers = 0;
+    chatOpened = decision === 'ai';
+    chatHistory = []; // Reset chat history for the second round
     loadStimulus();
 }
 
 function showFinalReward() {
-    console.log('Showing final reward screen');
     const reward = correctAnswers * 1; // $1 per correct answer
     document.getElementById('experiment').innerHTML = `
-        <h2>Experiment Completed</h2>
+        <h3>Thank you for participating in the experiment!</h3>
         <p>You got ${correctAnswers} correct answers in the second round.</p>
         <p>Your reward is $${reward}.</p>
         <p>Your completion code is: ${participantId}</p>
@@ -223,7 +291,6 @@ function showFinalReward() {
 }
 
 function saveData(data) {
-    console.log('Attempting to save data:', data);
     fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'cors',
@@ -255,24 +322,3 @@ function saveData(data) {
 // Initialize experiment
 shuffleArray(allStimuli);
 loadStimulus();
-
-// Add this for testing
-function testSaveData() {
-    console.log('Testing data save function');
-    saveData({
-        participantId: participantId,
-        round: 1,
-        trial: 1,
-        participantRank: 25,
-        correctRank: 30,
-        aiPrediction: 28,
-        finalDecision: '',
-        correctAnswers: '',
-        reward: ''
-    });
-}
-
-// Add test button to HTML
-document.body.innerHTML += '<button onclick="testSaveData()">Test Save Data</button>';
-
-console.log('Script loaded successfully');
