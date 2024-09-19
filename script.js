@@ -347,18 +347,23 @@ function showFinalReward() {
 function saveData(data) {
     fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
-        mode: 'no-cors',
+        mode: 'cors', // Changed from 'no-cors' to 'cors'
         cache: 'no-cache',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(data)
-    }).then(response => {
+    })
+    .then(response => {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        console.log('Data sent successfully');
-    }).catch(error => {
+        return response.json(); // Assuming the server returns JSON
+    })
+    .then(data => {
+        console.log('Data sent successfully:', data);
+    })
+    .catch(error => {
         console.error('Error sending data:', error);
         let localData = JSON.parse(localStorage.getItem('experimentData') || '[]');
         localData.push(data);
