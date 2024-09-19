@@ -15,6 +15,9 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+        #experiment-area {
+            margin-bottom: 20px;
+        }
         #chat-interface {
             border: 1px solid #ccc;
             border-radius: 10px;
@@ -56,9 +59,6 @@
             border-bottom-left-radius: 10px;
             border-bottom-right-radius: 10px;
         }
-        .chat-closed {
-            display: none;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -82,7 +82,12 @@
 </head>
 <body>
     <div id="experiment">
-        <!-- The experiment content will be dynamically inserted here by JavaScript -->
+        <div id="experiment-area">
+            <!-- The experiment content will be dynamically inserted here by JavaScript -->
+        </div>
+        <div id="chat-interface">
+            <!-- The chat interface will be dynamically inserted here by JavaScript -->
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
