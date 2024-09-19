@@ -88,42 +88,50 @@ function loadStimulus() {
     if (currentTrial < MAX_TRIALS) {
         currentStimulus = allStimuli[currentTrial];
         
-        let content = `
+        let leftColumnContent = `
             <h2>Trial ${currentTrial + 1} of ${MAX_TRIALS}</h2>
-            <div id="tables-container" style="display: flex; justify-content: space-between;">
-                <div id="stimulus-table" style="width: 48%;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr><th colspan="2" style="text-align: left; padding: 5px;">State Information:</th></tr>
-                        <tr><td style="border: 1px solid black; padding: 5px;">Number of Major Airports</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.airports}</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 5px;">Census Population Rank - 2010</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.population_rank}</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 5px;">Number of Counties Rank</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.counties_rank}</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 5px;">Median Household Income Rank - 2008</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.income_rank}</td></tr>
-                        <tr><td style="border: 1px solid black; padding: 5px;">Domestic Travel Expenditure Rank - 2009</td><td style="border: 1px solid black; padding: 5px;">${currentStimulus.travel_rank}</td></tr>
-                    </table>
-                </div>
-                <div id="result-table" style="width: 48%;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr style="background-color: #f2f2f2;">
-                            <th style="border: 1px solid black; padding: 5px;">You</th>
-                            <th style="border: 1px solid black; padding: 5px;">AI Prediction</th>
-                            <th style="border: 1px solid black; padding: 5px;">Correct Rank</th>
-                        </tr>
-                        <tr>
-                            <td id="user-rank" style="border: 1px solid black; padding: 5px;"></td>
-                            <td id="ai-rank" style="border: 1px solid black; padding: 5px;"></td>
-                            <td id="correct-rank" style="border: 1px solid black; padding: 5px;"></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
+            <table>
+                <tr><th colspan="2">State Information:</th></tr>
+                <tr><td>Number of Major Airports</td><td>${currentStimulus.airports}</td></tr>
+                <tr><td>Census Population Rank - 2010</td><td>${currentStimulus.population_rank}</td></tr>
+                <tr><td>Number of Counties Rank</td><td>${currentStimulus.counties_rank}</td></tr>
+                <tr><td>Median Household Income Rank - 2008</td><td>${currentStimulus.income_rank}</td></tr>
+                <tr><td>Domestic Travel Expenditure Rank - 2009</td><td>${currentStimulus.travel_rank}</td></tr>
+            </table>
             <p>Please select a rank for this state based on the number of flight passengers (1-50):</p>
             <div style="display: flex; justify-content: flex-start; align-items: center;">
                 <input type="number" id="rank-input" min="1" max="50" style="width: 100px; height: 30px; margin-right: 10px;">
                 <button id="submit-rank" onclick="submitRank()" style="height: 36px;">Submit Rank</button>
             </div>`;
         
-        document.getElementById('experiment-area').innerHTML = content;
-        updateChatInterface();
+        let rightColumnContent = `
+            <table id="result-table">
+                <tr>
+                    <th>You</th>
+                    <th>AI Prediction</th>
+                    <th>Correct Rank</th>
+                </tr>
+                <tr>
+                    <td id="user-rank"></td>
+                    <td id="ai-rank"></td>
+                    <td id="correct-rank"></td>
+                </tr>
+            </table>
+            <div id="chat-interface">
+                <div id="chat-header">AI Agent</div>
+                <div id="chat-messages"></div>
+                <div id="chat-input">
+                    ${!isSecondRound && currentTrial === 0 ? 
+                        `<button id="request-prediction" onclick="openChat()" disabled>Request AI Prediction</button>` :
+                        `<button id="ask-prediction" onclick="requestAIPrediction()" disabled>${aiQuestions[currentTrial]}</button>`
+                    }
+                </div>
+            </div>`;
+        
+        document.getElementById('left-column').innerHTML = leftColumnContent;
+        document.getElementById('right-column').innerHTML = rightColumnContent;
+        
+        updateChatDisplay();
     } else {
         if (!isSecondRound) {
             showFinalDecision();
@@ -148,14 +156,14 @@ function submitRank() {
     
     if (!isSecondRound) {
         if (currentTrial === 0) {
-            const requestPredictionButton = document.getElementById('request-prediction');
-            requestPredictionButton.disabled = false;
-            requestPredictionButton.classList.remove('inactive');
+            document.getElementById('request-prediction').disabled = false;
         } else {
             document.getElementById('ask-prediction').disabled = false;
         }
     } else if (delegatedToAI) {
         requestAIPrediction();
+    } else {
+        showCorrectAnswer();
     }
     
     saveData({
@@ -171,20 +179,10 @@ function submitRank() {
 
 function openChat() {
     chatOpened = true;
-    updateChatInterface();
-}
-
-function updateChatInterface() {
-    const chatInterface = document.getElementById('chat-interface');
-    chatInterface.innerHTML = `
-        <div id="chat-header">AI Agent</div>
-        <div id="chat-messages"></div>
-        <div id="chat-input">
-            ${chatOpened ? 
-                `<button id="ask-prediction" onclick="requestAIPrediction()" ${currentSelection === null ? 'disabled' : ''}>${aiQuestions[currentTrial]}</button>` :
-                `<button id="request-prediction" onclick="openChat()" ${currentSelection === null ? 'disabled' : ''}>Request AI Prediction</button>`
-            }
-        </div>`;
+    document.getElementById('request-prediction').style.display = 'none';
+    document.getElementById('chat-input').innerHTML = `
+        <button id="ask-prediction" onclick="requestAIPrediction()">${aiQuestions[currentTrial]}</button>
+    `;
     updateChatDisplay();
 }
 
